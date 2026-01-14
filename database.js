@@ -8,7 +8,7 @@ const database = new Pool({
     host: process.env.HOST,
     database: process.env.DATABASE,
     password: process.env.PASSWORD,
-    port: process.env.PORT_DB,
+    port: parseInt(process.env.PORT_DB),
 })
 
 export default database
