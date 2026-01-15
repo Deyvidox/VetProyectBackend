@@ -26,5 +26,5 @@ export const ClientRegister = async (password, address, date_of_birth, email, fi
         last_name, phone, profile_photo, role_id, username
     ])
 
-    return { "results": rowCount, "data": rows }
+    return { "results": rowCount, "data": rows[0] }
 }

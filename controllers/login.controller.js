@@ -5,20 +5,21 @@ import JWT from "jsonwebtoken"
 import dotenv from "dotenv"
 
 dotenv.config()
+
 export const LoginControl = async (req, res, next) => {
     try {
         const { error, value } = LoginValidated.validate(req.body)
 
         if (error) {
             req.message = { "type": "Validation", "message": error.details, "status": 400 }
-            next()
+            return next()
         }
 
         const { results, data } = await Login(value.username)
 
         if (results == 0) {
             req.message = { "type": "Not Found", "message": "The User NOT Exists", "status": 400 }
-            next()
+            return next()
         }
 
         const { password, id, permissions } = data
@@ -30,14 +31,14 @@ export const LoginControl = async (req, res, next) => {
 
             const token = JWT.sign(payload, process.env.SECRET, config)
             req.message = { "type": "Successfully", "message": { token }, "status": 200 }
-            next()
+            return next()
         }
         else {
             req.message = { "type": "Error", "message": "Incorrect credentials", "status": 400 }
-            next()
+            return next()
         }
     } catch (err) {
         req.message = { "type": "Error", "message": err.message, "status": 500 }
-        next()
+        return next()
     }
 }

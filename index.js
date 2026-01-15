@@ -25,7 +25,8 @@ app.use("/inventario", inventarioRoutes)
 
 app.use(Messages)
 
-const PORT_APP = process.env.PORT || 4000
-app.listen(PORT_APP, () => { 
-    console.log("🚀 Servidor listo en http://localhost:" + PORT_APP) 
+app.get("/health", (req, res) => {
+    res.json({ status: "OK", timestamp: new Date().toISOString() })
 })
+
+app.listen(process.env.PORT, () => { console.log("🚀 Servidor listo en http://localhost:" + process.env.PORT) })
