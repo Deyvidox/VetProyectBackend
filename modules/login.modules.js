@@ -7,5 +7,5 @@ export const Login = async (username) => {
     WHERE u.username = $1 AND u.status = 'Active';`
 
     const { rowCount, rows } = await database.query(sql, [username])
-    return { "results": rowCount, "data": rows }
+    return { "results": rowCount, "data": rows[0] }
 }
