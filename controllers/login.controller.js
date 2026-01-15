@@ -5,6 +5,7 @@ import JWT from "jsonwebtoken"
 import dotenv from "dotenv"
 
 dotenv.config()
+
 export const LoginControl = async (req, res, next) => {
     try {
         const { error, value } = LoginValidated.validate(req.body)

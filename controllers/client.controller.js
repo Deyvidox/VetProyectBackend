@@ -21,7 +21,7 @@ export const ClientRegisterControl = async (req, res, next) => {
             return next()
         }
 
-        const hash = await bcrypt.hash(value.password, 20)
+        const hash = await bcrypt.hash(value.password, 10)
 
         const { results, data } = await ClientRegister(
             hash, value.address, value.date_of_birth,
