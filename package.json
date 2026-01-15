@@ -1,7 +1,7 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "Sistema de Gestión de una Veterinaria Lenguaje de Programación III Backend",
   "main": "index.js",
   "type": "module",
   "scripts": {
@@ -17,11 +17,20 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "express-validator": "^7.3.1",
     "joi": "^18.0.2",
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.16.3"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Deyvidox/VetProyectBackend.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Deyvidox/VetProyectBackend/issues"
+  },
+  "homepage": "https://github.com/Deyvidox/VetProyectBackend#readme"
 }

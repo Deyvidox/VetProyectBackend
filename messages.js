@@ -10,4 +10,9 @@ const Messages = (req, res) => {
     return res.status(status).json({ type, message })
 }
 
-export default Messages
+    // Si existe, desestructuramos normal
+    const { type, message, status } = req.message;
+    return res.status(status).json({ type, message });
+};
+
+export default Messages;

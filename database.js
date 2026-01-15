@@ -21,4 +21,8 @@ database.on('error', (err) => {
     console.error('❌ Error en la conexión a PostgreSQL:', err)
 })
 
+database.on('error', (err) => {
+    console.error('Error inesperado en el pool de la base de datos:', err.message);
+});
+
 export default database
