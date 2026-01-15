@@ -8,7 +8,7 @@ export const ClientRegisterControl = async (req, res, next) => {
 
         if (error) {
             req.message = { "type": "Validation", "message": error.details, "status": 400 }
-            next()
+            return next()
         }
 
         const unique = await RegisterUnique(value.identification_number, value.phone, value.username, value.email)
@@ -18,10 +18,10 @@ export const ClientRegisterControl = async (req, res, next) => {
                 "type": "Validation", "message": "A user with this data already exists.",
                 "status": 400
             }
-            next()
+            return next()
         }
 
-        const hash = bcrypt.hash(value.password, 20)
+        const hash = await bcrypt.hash(value.password, 20)
 
         const { results, data } = await ClientRegister(
             hash, value.address, value.date_of_birth,
@@ -36,10 +36,10 @@ export const ClientRegisterControl = async (req, res, next) => {
             },
             status: 201
         }
-        next()
+        return next()
 
     } catch (err) {
         req.message = { type: "Error", message: err.message, status: 400 }
-        next()
+        return next()
     }
 }
