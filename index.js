@@ -11,7 +11,6 @@ import inventarioRoutes from './routes/inventario.crud.adicional.routes.js'
 dotenv.config()
 const app = Express()
 
-// Middlewares obligatorios antes de las rutas
 app.use(cors())
 app.use(Express.json()) 
 app.use(Express.urlencoded({ extended: true }))
