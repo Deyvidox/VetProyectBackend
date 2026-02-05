@@ -1,13 +1,13 @@
+import { appointmentSchema, AppointmentIdValidated } from "../validates/appointment.validation.js";
+import { GetAllAppointments, CreateAppointment, UpdateAppointment, DeleteAppointment } from "../modules/appointment.model.js";
 
-import { AppointmentSchemaValidated, AppointmentIdValidated } from "../validates/appointment.validate.js";
-import { CreateAppointment, DeleteAppointment, GetAllAppointments, UpdateAppointment } from "../modules/appointment.model.js";
-
-export const GetAllAppointmentsControl = async (req, res, next) => {
+export const GetAppointmentsControl = async (req, res, next) => {
     try {
-        const { results, data } = await GetAllAppointments();
+        const { search } = req.query;
+        const { results, data } = await GetAllAppointments(search);
         req.message = {
             type: "Successfully",
-            message: { context: "Citas obtenidas con éxito", count: results, appointments: data },
+            message: { context: "Citas recuperadas", count: results, appointments: data },
             status: 200
         };
         return next();
@@ -19,26 +19,14 @@ export const GetAllAppointmentsControl = async (req, res, next) => {
 
 export const CreateAppointmentControl = async (req, res, next) => {
     try {
-        const validation = AppointmentSchemaValidated.safeParse(req.body);
-        if (!validation.success) {
-            req.message = { 
-                type: "Validation", 
-                message: validation.error.errors.map(e => e.message).join(", "), 
-                status: 400 
-            };
+        const val = appointmentSchema.safeParse(req.body);
+        if (!val.success) {
+            req.message = { type: "Validation", message: val.error.errors.map(e => e.message).join(", "), status: 400 };
             return next();
         }
-
-        const { results, data } = await CreateAppointment(
-            validation.data.mascota_id, validation.data.veterinario_id, 
-            validation.data.fecha_cita, validation.data.estado, validation.data.notas
-        );
-
-        req.message = {
-            type: "Successfully",
-            message: { context: "Cita programada correctamente", count: results, data: data },
-            status: 201
-        };
+        const { pet_id, status, notes } = val.data;
+        const { data } = await CreateAppointment(pet_id, status, notes);
+        req.message = { type: "Successfully", message: { context: "Cita agendada", data }, status: 201 };
         return next();
     } catch (err) {
         req.message = { type: "Error", message: err.message, status: 400 };
@@ -48,28 +36,18 @@ export const CreateAppointmentControl = async (req, res, next) => {
 
 export const UpdateAppointmentControl = async (req, res, next) => {
     try {
-        const validation = AppointmentSchemaValidated.safeParse(req.body);
-        const idValidation = AppointmentIdValidated.safeParse({ id: req.params.id });
-
-        if (!validation.success || !idValidation.success) {
-            req.message = { 
-                type: "Validation", 
-                message: "Datos de cita o ID inválidos", 
-                status: 400 
-            };
+        const idVal = AppointmentIdValidated.safeParse({ id: req.params.id });
+        const dataVal = appointmentSchema.safeParse(req.body);
+        if (!idVal.success || !dataVal.success) {
+            req.message = { type: "Validation", message: "ID o datos inválidos", status: 400 };
             return next();
         }
-
-        const { results, data } = await UpdateAppointment(
-            req.params.id, validation.data.mascota_id, validation.data.veterinario_id, 
-            validation.data.fecha_cita, validation.data.estado, validation.data.notas
-        );
-
-        req.message = {
-            type: "Successfully",
-            message: { context: "Cita actualizada", count: results, data: data },
-            status: 200
-        };
+        const { results, data } = await UpdateAppointment(req.params.id, dataVal.data.status, dataVal.data.notes);
+        if (results === 0) {
+            req.message = { type: "Error", message: "Cita no encontrada", status: 404 };
+            return next();
+        }
+        req.message = { type: "Successfully", message: { context: "Cita actualizada", data }, status: 200 };
         return next();
     } catch (err) {
         req.message = { type: "Error", message: err.message, status: 400 };
@@ -80,11 +58,9 @@ export const UpdateAppointmentControl = async (req, res, next) => {
 export const DeleteAppointmentControl = async (req, res, next) => {
     try {
         const { results } = await DeleteAppointment(req.params.id);
-        if (results === 0) {
-            req.message = { type: "Error", message: "Cita no encontrada", status: 404 };
-            return next();
-        }
-        req.message = { type: "Successfully", message: "Cita eliminada satisfactoriamente", status: 200 };
+        req.message = results > 0 
+            ? { type: "Successfully", message: "Cita eliminada", status: 200 }
+            : { type: "Error", message: "Cita no encontrada", status: 404 };
         return next();
     } catch (err) {
         req.message = { type: "Error", message: err.message, status: 400 };

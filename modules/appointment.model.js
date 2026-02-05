@@ -1,48 +1,47 @@
 import database from "../database.js";
 
-export const GetAllAppointments = async () => {
-    const sql = `
-        SELECT a.id, a.pet_id AS mascota_id, a.veterinarian_id, 
-               a.appointment_date AS fecha_cita, a.status AS estado, a.notes AS notas,
-               p.name AS mascota_nombre, 
-               u.first_name || ' ' || u.last_name AS vet_nombre
-        FROM appointments AS a
-        JOIN pets AS p ON a.pet_id = p.id
-        JOIN users AS u ON a.veterinarian_id = u.id
-        ORDER BY a.appointment_date DESC;`;
+export const GetAllAppointments = async (search = '') => {
+    let sql = `
+        SELECT 
+            a.id, 
+            a.created_at AS fecha_creacion,
+            a.status AS estado, 
+            a.notes AS notas,
+            p.name AS nombre_mascota, 
+            u.first_name || ' ' || u.last_name AS nombre_cliente
+        FROM appointments a
+        INNER JOIN pets p ON a.pet_id = p.id
+        INNER JOIN users u ON p.owner_id = u.id`;
 
-    const { rows, rowCount } = await database.query(sql);
-    return { "results": rowCount, "data": rows };
+    const params = [];
+    if (search) {
+        sql += ` WHERE p.name ILIKE $1 OR u.first_name ILIKE $1 OR u.last_name ILIKE $1`;
+        params.push(`%${search}%`);
+    }
+
+    sql += ` ORDER BY a.created_at DESC;`;
+    const { rows, rowCount } = await database.query(sql, params);
+    return { results: rowCount, data: rows };
 };
 
-export const CreateAppointment = async (mascota_id, veterinario_id, fecha_cita, estado, notas) => {
-    const sql = `INSERT INTO appointments(pet_id, veterinarian_id, appointment_date, status, notes, created_at, updated_at)
-                 VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                 RETURNING *;`;
-
-    const { rowCount, rows } = await database.query(sql, [
-        mascota_id, veterinario_id, fecha_cita, estado, notas
-    ]);
-
-    return { "results": rowCount, "data": rows[0] };
+export const CreateAppointment = async (pet_id, status, notes) => {
+    const sql = `INSERT INTO appointments (pet_id, status, notes, created_at, updated_at)
+                 VALUES ($1, $2, $3, NOW(), NOW())
+                 RETURNING id, status, notes;`;
+    const { rows, rowCount } = await database.query(sql, [pet_id, status, notes]);
+    return { results: rowCount, data: rows[0] };
 };
 
-export const UpdateAppointment = async (id, mascota_id, veterinario_id, fecha_cita, estado, notas) => {
+export const UpdateAppointment = async (id, status, notes) => {
     const sql = `UPDATE appointments 
-                 SET pet_id = $1, veterinarian_id = $2, appointment_date = $3, 
-                     status = $4, notes = $5, updated_at = CURRENT_TIMESTAMP
-                 WHERE id = $6
-                 RETURNING *;`;
-
-    const { rowCount, rows } = await database.query(sql, [
-        mascota_id, veterinario_id, fecha_cita, estado, notas, id
-    ]);
-
-    return { "results": rowCount, "data": rows[0] };
+                 SET status = $1, notes = $2, updated_at = NOW()
+                 WHERE id = $3 RETURNING *;`;
+    const { rows, rowCount } = await database.query(sql, [status, notes, id]);
+    return { results: rowCount, data: rows[0] };
 };
 
 export const DeleteAppointment = async (id) => {
     const sql = `DELETE FROM appointments WHERE id = $1 RETURNING *;`;
-    const { rowCount, rows } = await database.query(sql, [id]);
-    return { "results": rowCount, "data": rows[0] };
+    const { rowCount } = await database.query(sql, [id]);
+    return { results: rowCount };
 };
