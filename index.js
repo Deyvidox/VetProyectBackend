@@ -1,48 +1,30 @@
-import Express from "express"
-import cors from "cors"
-import dotenv from "dotenv"
+import express from "express";
+import dotenv from "dotenv";
+import database from "./database.js"; // IMPORTANTE: Solo un punto (.)
+import inventoryRoutes from "./routes/inventory.routes.js";
+import appointmentRoutes from "./routes/appointment.routes.js";
 
-import LoginRoutes from "./routes/login.routes.js"
-import ClientRoutes from "./routes/client.routes.js"
-<<<<<<< Updated upstream
-import petsRoutes from "./routes/pets.crud.adicional.routes.js"
-import consultasRoutes from './routes/consultas.crud.adicional.routes.js'
-import inventarioRoutes from './routes/inventario.crud.adicional.routes.js'
-import Messages from "./messages.js"
-=======
-// Importamos el nuevo módulo de citas
-import AppointmentRoutes from "./routes/appointment.routes.js" 
->>>>>>> Stashed changes
+// Configuración de variables de entorno
+dotenv.config();
 
-dotenv.config()
-const app = Express()
+const app = express();
 
-// Middlewares obligatorios antes de las rutas
-app.use(cors())
-app.use(Express.json()) 
-app.use(Express.urlencoded({ extended: true }))
+// Middlewares
+app.use(express.json());
 
-// Endpoints principales
-app.use("/login", LoginRoutes)
-app.use("/clients", ClientRoutes)
-<<<<<<< Updated upstream
-app.use("/mascotas", petsRoutes)
-app.use("/consultas", consultasRoutes)
-app.use("/inventario", inventarioRoutes)
+// Rutas
+app.use("/inventory", inventoryRoutes);
+app.use("/appointments", appointmentRoutes);
 
-app.use(Messages)
-=======
-// Cambiamos mascotas por citas para que el servidor no explote
-app.use("/appointments", AppointmentRoutes) 
->>>>>>> Stashed changes
+// Prueba de conexión a la base de datos
+try {
+    await database.query("SELECT NOW()");
+    console.log("✅ Conexión a PostgreSQL establecida");
+} catch (err) {
+    console.error("❌ Error conectando a la base de datos:", err.message);
+}
 
-app.get("/health", (req, res) => {
-    res.json({ status: "OK", timestamp: new Date().toISOString() })
-})
-
-// Usamos un fallback por si el .env no carga el puerto
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => { 
-    console.log("🚀 Servidor listo en http://localhost:" + PORT) 
-})
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => {
+    console.log(`🚀 Servidor listo en http://localhost:${PORT}`);
+});
