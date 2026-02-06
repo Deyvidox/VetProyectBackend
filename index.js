@@ -1,7 +1,8 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import database from "./database.js"; // IMPORTANTE: Solo un punto (.)
+import cors from "cors"; 
+import database from "./database.js"; 
 import inventoryRoutes from "./routes/inventory.routes.js";
 import appointmentRoutes from "./routes/appointment.routes.js";
 import RegisterRoutes from "./routes/register.routes.js"
@@ -9,7 +10,6 @@ import RolesRoutes from "./routes/roles.routes.js"
 
 
 
-// Configuración de variables de entorno
 dotenv.config();
 import LoginRoutes from "./routes/login.routes.js"
 import ClientRoutes from "./routes/client.routes.js"
@@ -19,7 +19,7 @@ app.use(cors())
 app.use(express.json()) 
 app.use(express.urlencoded({ extended: true }))
 
-// Rutas
+// Rutas Reales
 app.use("/inventory", inventoryRoutes);
 app.use("/appointments", appointmentRoutes);
 app.use("/users", ClientRoutes);
@@ -32,15 +32,15 @@ app.use("consultas", consultasRoutes);
 app.use(); */
 
 
-// Prueba de conexión a la base de datos
+// Prueba de conexión
 try {
     await database.query("SELECT NOW()");
-    console.log("✅ Conexión a PostgreSQL establecida");
+    console.log("✅ Conexión a PostgreSQL establecida exitosamente");
 } catch (err) {
     console.error("❌ Error conectando a la base de datos:", err.message);
 }
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
-    console.log(`🚀 Servidor listo en http://localhost:${PORT}`);
+    console.log(`🚀 Servidor real corriendo en http://localhost:${PORT}`);
 });
