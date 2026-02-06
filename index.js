@@ -6,11 +6,17 @@ import appointmentRoutes from "./routes/appointment.routes.js";
 
 // Configuración de variables de entorno
 dotenv.config();
+import LoginRoutes from "./routes/login.routes.js"
+import ClientRoutes from "./routes/client.routes.js"
+import petsRoutes from "./routes/pets.crud.adicional.routes.js"
+import consultasRoutes from './routes/consultas.crud.adicional.routes.js'
+import inventarioRoutes from './routes/inventario.crud.adicional.routes.js'
 
 const app = express();
 
-// Middlewares
-app.use(express.json());
+app.use(cors())
+app.use(Express.json()) 
+app.use(Express.urlencoded({ extended: true }))
 
 // Rutas
 app.use("/inventory", inventoryRoutes);

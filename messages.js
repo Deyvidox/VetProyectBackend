@@ -7,9 +7,8 @@ const Messages = (req, res) => {
         });
     }
 
-    // Si existe, desestructuramos y enviamos la respuesta
-    const { type, message, status } = req.message;
-    return res.status(status).json({ type, message });
-};
+    const { type, message, status } = req.message
+    return res.status(status).json({ type, message })
+}
 
 export default Messages;
