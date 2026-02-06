@@ -1,3 +1,4 @@
+// db.js
 import pg from "pg";
 import dotenv from "dotenv";
 
@@ -5,21 +6,15 @@ dotenv.config();
 
 const { Pool } = pg;
 
+// Esta opción usa variables individuales en lugar de una URL
 const database = new Pool({
-       connectionString: process.env.DATABASE_URL,
-    // Opciones recomendadas para entornos de producción/cloud
-    ssl: {
-        rejectUnauthorized: false // Necesario para Supabase
-    },
-
-
-/*     user: process.env.USER || 'postgres',
+    user: process.env.USER || 'postgres',
     host: process.env.HOST || 'localhost',
     database: process.env.DATABASE,
     password: String(process.env.PASSWORD || ''), 
     port: parseInt(process.env.PORT_DB) || 5432,
     connectionTimeoutMillis: 5000,
-    idleTimeoutMillis: 30000 */
+    idleTimeoutMillis: 30000
 });
 
 database.on('connect', () => {
