@@ -30,7 +30,12 @@ export const LoginControl = async (req, res, next) => {
             const config = { "algorithm": "HS512", "expiresIn": "1d" }
 
             const token = JWT.sign(payload, process.env.SECRET, config)
-            req.message = { "type": "Successfully", "message": { token }, "status": 200 }
+            req.message = {
+                "type": "Successfully", "message": {
+                    token,
+                    text: "Login Correctly"
+                }, "status": 200
+            }
             return next()
         }
         else {
