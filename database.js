@@ -6,13 +6,20 @@ dotenv.config();
 const { Pool } = pg;
 
 const database = new Pool({
-    user: process.env.USER || 'postgres',
+       connectionString: process.env.DATABASE_URL,
+    // Opciones recomendadas para entornos de producción/cloud
+    ssl: {
+        rejectUnauthorized: false // Necesario para Supabase
+    },
+
+
+/*     user: process.env.USER || 'postgres',
     host: process.env.HOST || 'localhost',
     database: process.env.DATABASE,
     password: String(process.env.PASSWORD || ''), 
     port: parseInt(process.env.PORT_DB) || 5432,
     connectionTimeoutMillis: 5000,
-    idleTimeoutMillis: 30000
+    idleTimeoutMillis: 30000 */
 });
 
 database.on('connect', () => {
