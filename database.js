@@ -1,61 +1,65 @@
 // db.js
-import postgres from 'postgres';
-import dotenv from 'dotenv';
+import pg from "pg";
+import dotenv from "dotenv";
 
 dotenv.config();
 
-// Obtener la URL de conexión de Supabase
-const connectionString = process.env.DATABASE_URL;
+const { Pool } = pg;
 
-// Validar que la URL de conexión existe
-if (!connectionString) {
-    console.error('❌ DATABASE_URL no está definida en las variables de entorno');
-    process.exit(1);
+// Opción 1: Usando DATABASE_URL de Supabase (recomendado)
+const databaseConfig = process.env.DATABASE_URL 
+    ? {
+          connectionString: process.env.DATABASE_URL,
+          ssl: {
+              rejectUnauthorized: false // Importante para Supabase
+          }
+      }
+    : // Opción 2: Variables individuales (para compatibilidad)
+      {
+          user: process.env.USER || 'postgres',
+          host: process.env.HOST || 'localhost',
+          database: process.env.DATABASE || 'postgres',
+          password: String(process.env.PASSWORD || ''),
+          port: parseInt(process.env.PORT_DB) || 5432,
+          ssl: process.env.HOST?.includes('supabase') ? { rejectUnauthorized: false } : false
+      };
+
+const database = new Pool({
+    ...databaseConfig,
+    connectionTimeoutMillis: 5000,
+    idleTimeoutMillis: 30000,
+    max: 20, // Número máximo de conexiones en el pool
+});
+
+database.on('connect', () => {
+    console.log('✅ Conexión a PostgreSQL/Supabase establecida');
+});
+
+database.on('error', (err) => {
+    console.error('❌ Error inesperado en el pool:', err.message);
+});
+
+// Función para probar la conexión
+async function testConnection() {
+    try {
+        const client = await database.connect();
+        console.log('✅ Conexión exitosa a la base de datos');
+        
+        // Opcional: Hacer una consulta de prueba
+        const result = await client.query('SELECT version()');
+        console.log('✅ Versión de PostgreSQL:', result.rows[0].version);
+        
+        client.release();
+    } catch (error) {
+        console.error('❌ Error de conexión:', error.message);
+        console.log('💡 Asegúrate de que:');
+        console.log('   1. DATABASE_URL está configurada en .env');
+        console.log('   2. La IP está en la allowlist de Supabase');
+        console.log('   3. Las credenciales son correctas');
+    }
 }
 
-// Configurar la conexión SQL
-const sql = postgres(connectionString, {
-    // Configuraciones recomendadas para Supabase
-    idle_timeout: 20,
-    max_lifetime: 60 * 30,
-    connect_timeout: 10,
-    
-    // Configuraciones opcionales adicionales
-    ssl: {
-        rejectUnauthorized: false // Necesario para conexiones SSL con Supabase
-    },
-    
-    // Transformar nombres de columnas (opcional)
-    transform: {
-        column: {
-            // Convertir snake_case a camelCase automáticamente
-            from: postgres.fromCamel,
-            to: postgres.toCamel
-        }
-    }
-});
+// Ejecutar prueba de conexión al iniciar
+testConnection();
 
-// Manejar eventos de conexión
-sql`
-    SELECT 1
-`.then(() => {
-    console.log('✅ Conexión a Supabase establecida correctamente');
-}).catch(err => {
-    console.error('❌ Error al conectar con Supabase:', err.message);
-    process.exit(1);
-});
-
-// Manejar cierre de conexión en señales de terminación
-process.on('SIGINT', async () => {
-    await sql.end();
-    console.log('🔒 Conexión a Supabase cerrada');
-    process.exit(0);
-});
-
-process.on('SIGTERM', async () => {
-    await sql.end();
-    console.log('🔒 Conexión a Supabase cerrada');
-    process.exit(0);
-});
-
-export default sql;
+export default database;
