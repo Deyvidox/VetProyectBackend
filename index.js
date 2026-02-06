@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import cors from "cors"; 
 import database from "./database.js"; 
 import inventoryRoutes from "./routes/inventory.routes.js";
 import appointmentRoutes from "./routes/appointment.routes.js";
