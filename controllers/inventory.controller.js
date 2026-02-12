@@ -1,68 +1,75 @@
-import { inventorySchema, InventoryIdValidated } from "../validates/inventory.validation.js";
-import { GetAllInventory, CreateProduct, UpdateProduct, DeleteProduct } from "../modules/inventory.model.js";
+import * as InventoryModel from "../modules/inventory.model.js";
+import { v2 as cloudinary } from "cloudinary";
+import fs from "fs-extra";
 
-export const GetAllInventoryControl = async (req, res, next) => {
+export const GetAllInventoryControl = async (req, res) => {
     try {
-        const { search } = req.query;
-        const { results, data } = await GetAllInventory(search);
-        req.message = {
-            type: "Successfully",
-            message: { context: "Inventario cargado", count: results, inventory: data },
-            status: 200
-        };
-        return next();
-    } catch (err) {
-        req.message = { type: "Error", message: err.message, status: 400 };
-        return next();
+        const result = await InventoryModel.GetAllInventory(req.query);
+        return res.status(200).json({ success: true, data: result });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
-export const CreateProductControl = async (req, res, next) => {
+export const CreateProductControl = async (req, res) => {
+    let tempPath = null;
     try {
-        const validation = inventorySchema.safeParse(req.body);
-        if (!validation.success) {
-            req.message = { type: "Validation", message: validation.error.errors.map(e => e.message).join(", "), status: 400 };
-            return next();
+        const data = { ...req.body };
+        if (req.file) {
+            tempPath = req.file.path;
+            const uploadRes = await cloudinary.uploader.upload(tempPath, { folder: "vet_inventory" });
+            data.image_url = uploadRes.secure_url;
+            await fs.unlink(tempPath);
         }
-        const { data } = await CreateProduct(validation.data);
-        req.message = { type: "Successfully", message: { context: "Producto creado", data }, status: 201 };
-        return next();
-    } catch (err) {
-        req.message = { type: "Error", message: err.message, status: 400 };
-        return next();
+        const saved = await InventoryModel.CreateProduct(data);
+        return res.status(201).json({ success: true, data: saved });
+    } catch (error) {
+        if (req.file && fs.existsSync(req.file.path)) await fs.unlink(req.file.path);
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
-export const UpdateProductControl = async (req, res, next) => {
+export const UpdateProductControl = async (req, res) => {
     try {
-        const idVal = InventoryIdValidated.safeParse({ id: req.params.id });
-        const dataVal = inventorySchema.safeParse(req.body);
-        if (!idVal.success || !dataVal.success) {
-            req.message = { type: "Validation", message: "Datos inválidos", status: 400 };
-            return next();
+        const { id } = req.params;
+        const data = { ...req.body };
+
+        if (req.file) {
+            const uploadRes = await cloudinary.uploader.upload(req.file.path, { folder: "vet_inventory" });
+            data.image_url = uploadRes.secure_url;
+            await fs.unlink(req.file.path);
         }
-        const { results, data } = await UpdateProduct(req.params.id, dataVal.data);
-        if (results === 0) {
-            req.message = { type: "Error", message: "Producto no encontrado", status: 404 };
-            return next();
-        }
-        req.message = { type: "Successfully", message: { context: "Producto actualizado", data }, status: 200 };
-        return next();
-    } catch (err) {
-        req.message = { type: "Error", message: err.message, status: 400 };
-        return next();
+
+        const updated = await InventoryModel.UpdateProduct(id, data);
+        return res.status(200).json({ success: true, data: updated });
+    } catch (error) {
+        if (req.file && fs.existsSync(req.file.path)) await fs.unlink(req.file.path);
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
-export const DeleteProductControl = async (req, res, next) => {
+export const DeleteProductControl = async (req, res) => {
     try {
-        const { results } = await DeleteProduct(req.params.id);
-        req.message = results > 0 
-            ? { type: "Successfully", message: "Producto eliminado", status: 200 }
-            : { type: "Error", message: "No encontrado", status: 404 };
-        return next();
-    } catch (err) {
-        req.message = { type: "Error", message: err.message, status: 400 };
-        return next();
+        const { id } = req.params;
+        await InventoryModel.DeleteProduct(id);
+        return res.status(200).json({ success: true, message: "Eliminado correctamente" });
+    } catch (error) {
+        if (error.code === '23503') {
+            return res.status(400).json({ 
+                success: false, 
+                message: "No se puede eliminar: el producto está en uso." 
+            });
+        }
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export const GetByIdInventoryControl = async (req, res) => {
+    try {
+        const product = await InventoryModel.GetProductById(req.params.id);
+        if (!product) return res.status(404).json({ success: false, message: "No encontrado" });
+        return res.status(200).json({ success: true, data: product });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
     }
 };

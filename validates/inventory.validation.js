@@ -1,16 +1,35 @@
 import { z } from "zod";
 
+// Validamos que el ID sea un número antes de llegar a la base de datos
+export const validateId = (req, res, next) => {
+    const { id } = req.params;
+    if (!id || isNaN(id)) {
+        return res.status(400).json({ 
+            success: false, 
+            message: "El ID proporcionado no es válido." 
+        });
+    }
+    next();
+};
+
+// Validación opcional para el cuerpo del inventario (Zod)
 export const inventorySchema = z.object({
-    nombre: z.string().min(3, "El nombre debe tener al menos 3 caracteres"),
-    tipo: z.enum(['Medicine', 'Vaccine', 'Accessory', 'Food', 'Other']),
-    instrucciones: z.string().optional().nullable(),
-    cantidad: z.number().int().min(0, "La cantidad no puede ser negativa"),
-    precio_unitario: z.number().min(0, "El precio no puede ser negativo"),
-    estado: z.enum(['Available', 'Out of Stock', 'Discontinued']),
-    tags: z.array(z.string()).optional().default([]),
-    imagen_url: z.string().url().or(z.literal('')).optional()
+    name: z.string().min(3, "Mínimo 3 caracteres"),
+    type: z.enum(['Medicine', 'Vaccine', 'Accessory', 'Food', 'Other']),
+    quantity: z.coerce.number().min(0),
+    unit_price: z.coerce.number().min(0),
+    status: z.enum(['Available', 'Out of Stock', 'Discontinued'])
 });
 
-export const InventoryIdValidated = z.object({
-    id: z.string().regex(/^\d+$/, "El ID debe ser numérico")
-});
+export const validateInventoryBody = (req, res, next) => {
+    try {
+        // En multipart/form-data, req.body llega como strings, zod.coerce los arregla
+        inventorySchema.parse(req.body);
+        next();
+    } catch (error) {
+        return res.status(400).json({ 
+            success: false, 
+            errors: error.errors.map(e => e.message) 
+        });
+    }
+};
